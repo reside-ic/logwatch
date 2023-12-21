@@ -1,9 +1,9 @@
 test_that("throttle", {
   a <- 0
-  f <- function(n) {
-    a <<- a + n
+  f <- function() {
+    a <<- a + 1
   }
-  throttled <- throttle(0.05)
+  throttled <- throttle(f, 0.05, Inf)
   t1 <- Sys.time() + 0.5
   while (Sys.time() < t1) {
     throttled(f(1))
@@ -13,12 +13,26 @@ test_that("throttle", {
 })
 
 
+test_that("throttle can timeout", {
+  f <- mockery::mock(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+  throttled <- throttle(f, 0.05, 0.2)
+  t1 <- Sys.time() + 0.5
+  err <- expect_error(
+    while (Sys.time() < t1) {
+      throttled(f(1))
+    }, "timeout")
+
+  expect_s3_class(err, c("timeout", "error", "condition"), exact = TRUE)
+})
+
+
 test_that("collect logs from immediately running job", {
-  get_status <- mockery::mock("running", "running", "running", "success")
+  get_status <- mockery::mock("RUNNING", "RUNNING", "RUNNING", "SUCCESS")
   get_log <- mockery::mock(letters[1], letters[1:2], letters[1:3], letters[1:4])
   res <- evaluate_promise(
-    logwatch("job", get_status, get_log, show_log = TRUE, poll = 0))
-  expect_equal(res$result$status, "success")
+    logwatch("job", get_status, get_log, show_log = TRUE, poll = 0,
+             status_waiting = "WAITING", status_running = "RUNNING"))
+  expect_equal(res$result$status, "SUCCESS")
   expect_equal(res$messages, paste0(letters[1:4], "\n"))
   mockery::expect_called(get_status, 4)
   mockery::expect_called(get_log, 4)
@@ -102,18 +116,84 @@ test_that("can suppress output", {
 
 
 test_that("show log differences", {
-  expect_silent(res <- show_new_log(NULL, NULL))
-  expect_null(res)
+  expect_silent(res <- show_new_log(NULL, NULL, 0))
+  expect_equal(res, character())
 
   msg <- capture_messages(
-    expect_equal(show_new_log(c("a", "b"), NULL), c("a", "b")))
+    expect_equal(show_new_log(c("a", "b"), NULL, 0), c("a", "b")))
   expect_equal(msg, c("a\nb\n"))
 
   msg <- capture_messages(
-    expect_equal(show_new_log(c("a", "b"), c("a", "b")), c("a", "b")))
+    expect_equal(show_new_log(c("a", "b"), c("a", "b"), 0), c("a", "b")))
   expect_equal(msg, character())
 
   msg <- capture_messages(
-    expect_equal(show_new_log(c("a", "b", "c"), c("a", "b")), c("a", "b", "c")))
+    expect_equal(show_new_log(c("a", "b", "c"), c("a", "b"), 0),
+                 c("a", "b", "c")))
   expect_equal(msg, "c\n")
+})
+
+
+test_that("allow skips", {
+  msg <- capture_messages(
+    expect_equal(show_new_log(letters[1:6], NULL, 4), letters[1:6]))
+  expect_equal(msg, "e\nf\n")
+  msg <- capture_messages(
+    expect_equal(show_new_log(letters[1:6], NULL, -4), letters[1:6]))
+  expect_equal(msg, "c\nd\ne\nf\n")
+  msg <- capture_messages(
+    expect_equal(show_new_log(letters[1:6], NULL, 10), letters[1:6]))
+  expect_equal(msg, character())
+  msg <- capture_messages(
+    expect_equal(show_new_log(letters[1:6], NULL, -10), letters[1:6]))
+  expect_equal(msg, "a\nb\nc\nd\ne\nf\n")
+})
+
+
+test_that("can cope with timeout", {
+  get_status <- mockery::mock("running", cycle = TRUE)
+  get_log <- mockery::mock()
+  res <- testthat::evaluate_promise(
+    logwatch("job", get_status, get_log, poll = .01, timeout = 0.2,
+             show_log = FALSE))
+  expect_equal(res$result$status, "timeout")
+  expect_equal(res$output, "")
+  expect_equal(res$messages, character())
+})
+
+
+test_that("can cope with interrupt", {
+  get_status <- mockery::mock(
+    "running", "running", "running",
+    signalCondition(structure(list(), class = c("interrupt", "condition"))))
+  get_log <- mockery::mock()
+  res <- testthat::evaluate_promise(
+    logwatch("job", get_status, get_log, poll = 0, show_log = FALSE))
+  expect_equal(res$result$status, "interrupt")
+  mockery::expect_called(get_status, 4)
+})
+
+
+test_that("allow totally quiet version", {
+  mock_progress_bar <- mockery::mock()
+  mock_progress_update <- mockery::mock()
+  mock_progress_done <- mockery::mock()
+  mockery::stub(logwatch, "cli::cli_progress_bar", mock_progress_bar)
+  mockery::stub(logwatch, "cli::cli_progress_update", mock_progress_update)
+  mockery::stub(logwatch, "cli::cli_progress_done", mock_progress_done)
+
+  get_status <- mockery::mock(
+    "waiting", "waiting", "waiting", "waiting",
+    "running", "running", "running",
+    "success")
+  get_log <- mockery::mock(
+    letters[1], letters[1:2], letters[1:3], letters[1:4])
+  res <- evaluate_promise(
+    logwatch("job", get_status, get_log, show_log = FALSE,
+             show_spinner = FALSE, poll = 0))
+  expect_equal(res$messages, character())
+  expect_equal(res$output, "")
+  mockery::expect_called(mock_progress_bar, 0)
+  mockery::expect_called(mock_progress_update, 0)
+  mockery::expect_called(mock_progress_done, 0)
 })

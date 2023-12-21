@@ -15,5 +15,6 @@ BugReports: https://github.com/reside-ic/logwatch/issues
 Imports:
     cli
 Suggests:
+    mockery,
     testthat (>= 3.0.0)
 Config/testthat/edition: 3

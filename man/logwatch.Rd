@@ -12,7 +12,9 @@ logs. Examples include "task", "installation", etc.}
 
 \item{get_status}{Function that will fetch a status. Accepts no
 arguments, and returns one of a set of "waiting", "running" or
-any status you like after that.}
+any status you like after that.  When status is "waiting" we
+show a spinner but do not stream logs. When "running" we stream
+logs (but don't show a spinner). Any other statement returns.}
 
 \item{get_log}{A callback to read logs of the installation
 (something like \code{function() readLines(filename, warn = FALSE)}

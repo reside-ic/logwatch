@@ -7,7 +7,9 @@
 ##'
 ##' @param get_status Function that will fetch a status. Accepts no
 ##'   arguments, and returns one of a set of "waiting", "running" or
-##'   any status you like after that.
+##'   any status you like after that.  When status is "waiting" we
+##'   show a spinner but do not stream logs. When "running" we stream
+##'   logs (but don't show a spinner). Any other statement returns.
 ##'
 ##' @param get_log A callback to read logs of the installation
 ##'   (something like `function() readLines(filename, warn = FALSE)`
@@ -27,18 +29,27 @@
 ##'
 ##' @export
 logwatch <- function(what, get_status, get_log, show_log = TRUE, poll = 1) {
+  ## TODO: we should add an interrupt handler here too, and indicate
+  ## if we were interrupted; let the caller decide what to do with
+  ## that?
   throttled <- throttle(poll)
   t0 <- Sys.time()
   logs <- NULL
   status <- throttled(get_status())
   if (status == "waiting") {
     cli::cli_progress_bar(
-      format = "{cli::pb_spin} Waiting for {what} to start [{cli::pb_elapsed}]")
-    status <- throttled(get_status())
+      format = "{cli::pb_spin} Waiting for {what} to start [{cli::pb_elapsed}]",
+      format_done = paste("{.alert-success Waited {cli::pb_elapsed}",
+                          "for {what} to start}"))
     while (status == "waiting") {
       cli::cli_progress_update()
+      status <- throttled(get_status())
     }
+    cli::cli_progress_done()
   }
+  ## TODO: it would be nice to have a reassuring spinner here, but
+  ## there's no "cleanup last print" functionality in cli at the
+  ## moment (as we've used in the past) so not doing this yet.
   if (status == "running") {
     while (status == "running") {
       if (show_log) {
@@ -47,6 +58,11 @@ logwatch <- function(what, get_status, get_log, show_log = TRUE, poll = 1) {
       status <- throttled(get_status())
     }
   }
+
+  if (show_log) {
+    logs <- show_new_log(get_log(), logs)
+  }
+
   list(status = status, start = t0, end = Sys.time())
 }
 

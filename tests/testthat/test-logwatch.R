@@ -1,15 +1,28 @@
 test_that("throttle", {
   a <- 0
-  f <- function(n) {
-    a <<- a + n
+  f <- function() {
+    a <<- a + 1
   }
-  throttled <- throttle(0.05)
+  throttled <- throttle(f, 0.05, Inf)
   t1 <- Sys.time() + 0.5
   while (Sys.time() < t1) {
     throttled(f(1))
   }
   expect_lte(a, 11)
   expect_gte(a, 2) # this is hard on the very slow mac runner
+})
+
+
+test_that("throttle can timeout", {
+  f <- mockery::mock(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+  throttled <- throttle(f, 0.05, 0.2)
+  t1 <- Sys.time() + 0.5
+  err <- expect_error(
+    while (Sys.time() < t1) {
+      throttled(f(1))
+    }, "timeout")
+
+  expect_s3_class(err, c("timeout", "error", "condition"), exact = TRUE)
 })
 
 
@@ -117,4 +130,16 @@ test_that("show log differences", {
   msg <- capture_messages(
     expect_equal(show_new_log(c("a", "b", "c"), c("a", "b")), c("a", "b", "c")))
   expect_equal(msg, "c\n")
+})
+
+
+test_that("can cope with timeout", {
+  get_status <- mockery::mock("running", cycle = TRUE)
+  get_log <- mockery::mock()
+  res <- testthat::evaluate_promise(
+    logwatch("job", get_status, get_log, poll = .01, timeout = 0.2,
+             show_log = FALSE))
+  expect_equal(res$result$status, "timeout")
+  expect_equal(res$output, "")
+  expect_equal(res$messages, character())
 })

@@ -10,8 +10,10 @@ logwatch(
   get_log,
   show_log = TRUE,
   poll = 1,
+  timeout = Inf,
   status_waiting = "waiting",
-  status_running = "running"
+  status_running = "running",
+  status_timeout = "timeout"
 )
 }
 \arguments{
@@ -37,9 +39,15 @@ be printed}
 \item{poll}{Time, in seconds, used to throttle calls to the status
 function. The default is 1 second}
 
+\item{timeout}{Timeout, in seconds, after which we give up. This
+does not cancel the underlying process being watched!  We return
+\code{status_timeout} after a timeout (by default "timeout").}
+
 \item{status_waiting}{The value of a waiting status}
 
 \item{status_running}{The value of a running status}
+
+\item{status_timeout}{The value to return if we timeout}
 }
 \value{
 A list with elements:

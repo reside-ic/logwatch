@@ -172,3 +172,28 @@ test_that("can cope with interrupt", {
   expect_equal(res$result$status, "interrupt")
   mockery::expect_called(get_status, 4)
 })
+
+
+test_that("allow totally quiet version", {
+  mock_progress_bar <- mockery::mock()
+  mock_progress_update <- mockery::mock()
+  mock_progress_done <- mockery::mock()
+  mockery::stub(logwatch, "cli::cli_progress_bar", mock_progress_bar)
+  mockery::stub(logwatch, "cli::cli_progress_update", mock_progress_update)
+  mockery::stub(logwatch, "cli::cli_progress_done", mock_progress_done)
+
+  get_status <- mockery::mock(
+    "waiting", "waiting", "waiting", "waiting",
+    "running", "running", "running",
+    "success")
+  get_log <- mockery::mock(
+    letters[1], letters[1:2], letters[1:3], letters[1:4])
+  res <- evaluate_promise(
+    logwatch("job", get_status, get_log, show_log = FALSE,
+             show_spinner = FALSE, poll = 0))
+  expect_equal(res$messages, character())
+  expect_equal(res$output, "")
+  mockery::expect_called(mock_progress_bar, 0)
+  mockery::expect_called(mock_progress_update, 0)
+  mockery::expect_called(mock_progress_done, 0)
+})

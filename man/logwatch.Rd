@@ -4,17 +4,28 @@
 \alias{logwatch}
 \title{Watch logs}
 \usage{
-logwatch(what, get_status, get_log, show_log = TRUE, poll = 1)
+logwatch(
+  what,
+  get_status,
+  get_log,
+  show_log = TRUE,
+  poll = 1,
+  status_waiting = "waiting",
+  status_running = "running"
+)
 }
 \arguments{
 \item{what}{Very short summary of the process underlying the
 logs. Examples include "task", "installation", etc.}
 
 \item{get_status}{Function that will fetch a status. Accepts no
-arguments, and returns one of a set of "waiting", "running" or
-any status you like after that.  When status is "waiting" we
-show a spinner but do not stream logs. When "running" we stream
-logs (but don't show a spinner). Any other statement returns.}
+arguments, and returns one of a set of (by default) "waiting",
+"running" or any status you like after that.  When status is
+"waiting" we show a spinner but do not stream logs. When
+"running" we stream logs (but don't show a spinner). Any other
+statement returns.  You can change the expected "waiting" or
+"running" status values with the \code{status_waiting} and
+\code{status_running} arguments.}
 
 \item{get_log}{A callback to read logs of the installation
 (something like \code{function() readLines(filename, warn = FALSE)}
@@ -25,6 +36,10 @@ be printed}
 
 \item{poll}{Time, in seconds, used to throttle calls to the status
 function. The default is 1 second}
+
+\item{status_waiting}{The value of a waiting status}
+
+\item{status_running}{The value of a running status}
 }
 \value{
 A list with elements:

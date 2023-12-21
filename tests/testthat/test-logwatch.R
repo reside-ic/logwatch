@@ -14,11 +14,12 @@ test_that("throttle", {
 
 
 test_that("collect logs from immediately running job", {
-  get_status <- mockery::mock("running", "running", "running", "success")
+  get_status <- mockery::mock("RUNNING", "RUNNING", "RUNNING", "SUCCESS")
   get_log <- mockery::mock(letters[1], letters[1:2], letters[1:3], letters[1:4])
   res <- evaluate_promise(
-    logwatch("job", get_status, get_log, show_log = TRUE, poll = 0))
-  expect_equal(res$result$status, "success")
+    logwatch("job", get_status, get_log, show_log = TRUE, poll = 0,
+             status_waiting = "WAITING", status_running = "RUNNING"))
+  expect_equal(res$result$status, "SUCCESS")
   expect_equal(res$messages, paste0(letters[1:4], "\n"))
   mockery::expect_called(get_status, 4)
   mockery::expect_called(get_log, 4)

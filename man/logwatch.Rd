@@ -13,7 +13,8 @@ logwatch(
   timeout = Inf,
   status_waiting = "waiting",
   status_running = "running",
-  status_timeout = "timeout"
+  status_timeout = "timeout",
+  status_interrupt = "interrupt"
 )
 }
 \arguments{
@@ -48,6 +49,8 @@ does not cancel the underlying process being watched!  We return
 \item{status_running}{The value of a running status}
 
 \item{status_timeout}{The value to return if we timeout}
+
+\item{status_interrupt}{The value to return if we are interrupted}
 }
 \value{
 A list with elements:

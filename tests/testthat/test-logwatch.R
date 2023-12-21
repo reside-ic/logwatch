@@ -143,3 +143,15 @@ test_that("can cope with timeout", {
   expect_equal(res$output, "")
   expect_equal(res$messages, character())
 })
+
+
+test_that("can cope with interrupt", {
+  get_status <- mockery::mock(
+    "running", "running", "running",
+    signalCondition(structure(list(), class = c("interrupt", "condition"))))
+  get_log <- mockery::mock()
+  res <- testthat::evaluate_promise(
+    logwatch("job", get_status, get_log, poll = 0, show_log = FALSE))
+  expect_equal(res$result$status, "interrupt")
+  mockery::expect_called(get_status, 4)
+})

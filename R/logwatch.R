@@ -34,6 +34,8 @@
 ##'
 ##' @param status_timeout The value to return if we timeout
 ##'
+##' @param status_interrupt The value to return if we are interrupted
+##'
 ##' @return A list with elements:
 ##'
 ##' * status: Your final status call
@@ -43,11 +45,8 @@
 ##' @export
 logwatch <- function(what, get_status, get_log, show_log = TRUE, poll = 1,
                      timeout = Inf, status_waiting = "waiting",
-                     status_running = "running", status_timeout = "timeout") {
-  ## TODO: we should add an interrupt handler here too, and indicate
-  ## if we were interrupted; let the caller decide what to do with
-  ## that?
-
+                     status_running = "running", status_timeout = "timeout",
+                     status_interrupt = "interrupt") {
   ## TODO: we should allow for skipping of some amount of log at first
   get_status_throttled <- throttle(get_status, poll, timeout)
   t0 <- Sys.time()
@@ -83,6 +82,9 @@ logwatch <- function(what, get_status, get_log, show_log = TRUE, poll = 1,
   },
   timeout = function(e) {
     status <<- status_timeout
+  },
+  interrupt = function(e) {
+    status <<- status_interrupt
   })
 
   list(status = status, start = t0, end = Sys.time())

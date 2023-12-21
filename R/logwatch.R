@@ -6,8 +6,8 @@
 ##'   logs. Examples include "task", "installation", etc.
 ##'
 ##' @param get_status Function that will fetch a status. Accepts no
-##'   arguments, and returns one of a set of "waiting", "running",
-##'   "success" or "failure".
+##'   arguments, and returns one of a set of "waiting", "running" or
+##'   any status you like after that.
 ##'
 ##' @param get_log A callback to read logs of the installation
 ##'   (something like `function() readLines(filename, warn = FALSE)`
@@ -25,7 +25,7 @@
 ##' * start: The start time
 ##' * end: The end time
 ##'
-##' @author Richard FitzJohn
+##' @export
 logwatch <- function(what, get_status, get_log, show_log = TRUE, poll = 1) {
   throttled <- throttle(poll)
   t0 <- Sys.time()

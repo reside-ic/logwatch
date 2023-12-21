@@ -21,6 +21,12 @@
 ##' @param show_log Logical, indicating if the installation log should
 ##'   be printed
 ##'
+##' @param skip Optional integer indicating how to handle log content
+##'   that exists at the point where we start watching. The default
+##'   (0) shows all log contents.  A positive integer skips that many
+##'   lines, while a negative integer shows only that many lines (so
+##'   -5 shows the first five lines in the log).
+##'
 ##' @param poll Time, in seconds, used to throttle calls to the status
 ##'   function. The default is 1 second
 ##'
@@ -43,8 +49,8 @@
 ##' * end: The end time
 ##'
 ##' @export
-logwatch <- function(what, get_status, get_log, show_log = TRUE, poll = 1,
-                     timeout = Inf, status_waiting = "waiting",
+logwatch <- function(what, get_status, get_log, show_log = TRUE, skip = 0,
+                     poll = 1, timeout = Inf, status_waiting = "waiting",
                      status_running = "running", status_timeout = "timeout",
                      status_interrupt = "interrupt") {
   ## TODO: we should allow for skipping of some amount of log at first
@@ -71,13 +77,13 @@ logwatch <- function(what, get_status, get_log, show_log = TRUE, poll = 1,
     if (status == status_running) {
       while (status == status_running) {
         if (show_log) {
-          logs <- show_new_log(get_log(), logs)
+          logs <- show_new_log(get_log(), logs, skip)
         }
         status <- get_status_throttled()
       }
     }
     if (show_log) {
-      logs <- show_new_log(get_log(), logs)
+      logs <- show_new_log(get_log(), logs, skip)
     }
   },
   timeout = function(e) {
@@ -91,8 +97,10 @@ logwatch <- function(what, get_status, get_log, show_log = TRUE, poll = 1,
 }
 
 
-show_new_log <- function(curr, prev) {
-  if (length(prev) == 0) {
+show_new_log <- function(curr, prev, skip) {
+  if (is.null(prev) && skip != 0) {
+    show <- utils::tail(curr, -skip)
+  } else if (length(prev) == 0) {
     show <- curr
   } else {
     show <- curr[-seq_along(prev)]
@@ -100,7 +108,7 @@ show_new_log <- function(curr, prev) {
   if (length(show) > 0) {
     message(paste(show, collapse = "\n"))
   }
-  curr
+  curr %||% character()
 }
 
 

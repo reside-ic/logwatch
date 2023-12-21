@@ -9,6 +9,7 @@ logwatch(
   get_status,
   get_log,
   show_log = TRUE,
+  skip = 0,
   poll = 1,
   timeout = Inf,
   status_waiting = "waiting",
@@ -36,6 +37,12 @@ may be sufficient)}
 
 \item{show_log}{Logical, indicating if the installation log should
 be printed}
+
+\item{skip}{Optional integer indicating how to handle log content
+that exists at the point where we start watching. The default
+(0) shows all log contents.  A positive integer skips that many
+lines, while a negative integer shows only that many lines (so
+-5 shows the first five lines in the log).}
 
 \item{poll}{Time, in seconds, used to throttle calls to the status
 function. The default is 1 second}

@@ -116,20 +116,37 @@ test_that("can suppress output", {
 
 
 test_that("show log differences", {
-  expect_silent(res <- show_new_log(NULL, NULL))
-  expect_null(res)
+  expect_silent(res <- show_new_log(NULL, NULL, 0))
+  expect_equal(res, character())
 
   msg <- capture_messages(
-    expect_equal(show_new_log(c("a", "b"), NULL), c("a", "b")))
+    expect_equal(show_new_log(c("a", "b"), NULL, 0), c("a", "b")))
   expect_equal(msg, c("a\nb\n"))
 
   msg <- capture_messages(
-    expect_equal(show_new_log(c("a", "b"), c("a", "b")), c("a", "b")))
+    expect_equal(show_new_log(c("a", "b"), c("a", "b"), 0), c("a", "b")))
   expect_equal(msg, character())
 
   msg <- capture_messages(
-    expect_equal(show_new_log(c("a", "b", "c"), c("a", "b")), c("a", "b", "c")))
+    expect_equal(show_new_log(c("a", "b", "c"), c("a", "b"), 0),
+                 c("a", "b", "c")))
   expect_equal(msg, "c\n")
+})
+
+
+test_that("allow skips", {
+  msg <- capture_messages(
+    expect_equal(show_new_log(letters[1:6], NULL, 4), letters[1:6]))
+  expect_equal(msg, "e\nf\n")
+  msg <- capture_messages(
+    expect_equal(show_new_log(letters[1:6], NULL, -4), letters[1:6]))
+  expect_equal(msg, "c\nd\ne\nf\n")
+  msg <- capture_messages(
+    expect_equal(show_new_log(letters[1:6], NULL, 10), letters[1:6]))
+  expect_equal(msg, character())
+  msg <- capture_messages(
+    expect_equal(show_new_log(letters[1:6], NULL, -10), letters[1:6]))
+  expect_equal(msg, "a\nb\nc\nd\ne\nf\n")
 })
 
 

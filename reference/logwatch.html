@@ -50,7 +50,20 @@
     </div>
 
     <div id="ref-usage">
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">logwatch</span><span class="op">(</span><span class="va">what</span>, <span class="va">get_status</span>, <span class="va">get_log</span>, show_log <span class="op">=</span> <span class="cn">TRUE</span>, poll <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">logwatch</span><span class="op">(</span></span>
+<span>  <span class="va">what</span>,</span>
+<span>  <span class="va">get_status</span>,</span>
+<span>  <span class="va">get_log</span>,</span>
+<span>  show_log <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  skip <span class="op">=</span> <span class="fl">0</span>,</span>
+<span>  show_spinner <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  poll <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  timeout <span class="op">=</span> <span class="cn">Inf</span>,</span>
+<span>  status_waiting <span class="op">=</span> <span class="st">"waiting"</span>,</span>
+<span>  status_running <span class="op">=</span> <span class="st">"running"</span>,</span>
+<span>  status_timeout <span class="op">=</span> <span class="st">"timeout"</span>,</span>
+<span>  status_interrupt <span class="op">=</span> <span class="st">"interrupt"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div id="arguments">
@@ -62,10 +75,13 @@ logs. Examples include "task", "installation", etc.</p></dd>
 
 <dt>get_status</dt>
 <dd><p>Function that will fetch a status. Accepts no
-arguments, and returns one of a set of "waiting", "running" or
-any status you like after that.  When status is "waiting" we
-show a spinner but do not stream logs. When "running" we stream
-logs (but don't show a spinner). Any other statement returns.</p></dd>
+arguments, and returns one of a set of (by default) "waiting",
+"running" or any status you like after that.  When status is
+"waiting" we show a spinner but do not stream logs. When
+"running" we stream logs (but don't show a spinner). Any other
+statement returns.  You can change the expected "waiting" or
+"running" status values with the <code>status_waiting</code> and
+<code>status_running</code> arguments.</p></dd>
 
 
 <dt>get_log</dt>
@@ -79,9 +95,46 @@ may be sufficient)</p></dd>
 be printed</p></dd>
 
 
+<dt>skip</dt>
+<dd><p>Optional integer indicating how to handle log content
+that exists at the point where we start watching. The default
+(0) shows all log contents.  A positive integer skips that many
+lines, while a negative integer shows only that many lines (so
+-5 shows the first five lines in the log).  You can pass <code>Inf</code>
+to discard all previous logs, but stream all new ones.</p></dd>
+
+
+<dt>show_spinner</dt>
+<dd><p>Logical, indicating if a spinner should be
+shown while waiting for the task to start, and if <code>show_log</code> is
+<code>FALSE</code> for the task to complete.</p></dd>
+
+
 <dt>poll</dt>
 <dd><p>Time, in seconds, used to throttle calls to the status
 function. The default is 1 second</p></dd>
+
+
+<dt>timeout</dt>
+<dd><p>Timeout, in seconds, after which we give up. This
+does not cancel the underlying process being watched!  We return
+<code>status_timeout</code> after a timeout (by default "timeout").</p></dd>
+
+
+<dt>status_waiting</dt>
+<dd><p>The value of a waiting status</p></dd>
+
+
+<dt>status_running</dt>
+<dd><p>The value of a running status</p></dd>
+
+
+<dt>status_timeout</dt>
+<dd><p>The value to return if we timeout</p></dd>
+
+
+<dt>status_interrupt</dt>
+<dd><p>The value to return if we are interrupted</p></dd>
 
 </dl></div>
     <div id="value">

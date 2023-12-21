@@ -10,6 +10,7 @@ logwatch(
   get_log,
   show_log = TRUE,
   skip = 0,
+  show_spinner = TRUE,
   poll = 1,
   timeout = Inf,
   status_waiting = "waiting",
@@ -42,7 +43,12 @@ be printed}
 that exists at the point where we start watching. The default
 (0) shows all log contents.  A positive integer skips that many
 lines, while a negative integer shows only that many lines (so
--5 shows the first five lines in the log).}
+-5 shows the first five lines in the log).  You can pass \code{Inf}
+to discard all previous logs, but stream all new ones.}
+
+\item{show_spinner}{Logical, indicating if a spinner should be
+shown while waiting for the task to start, and if \code{show_log} is
+\code{FALSE} for the task to complete.}
 
 \item{poll}{Time, in seconds, used to throttle calls to the status
 function. The default is 1 second}

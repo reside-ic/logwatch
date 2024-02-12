@@ -70,7 +70,6 @@ logwatch <- function(what, get_status, get_log, show_log = TRUE, skip = 0,
                      status_timeout = "timeout",
                      status_interrupt = "interrupt",
                      multiple = FALSE) {
-  ## TODO: we should allow for skipping of some amount of log at first
   get_status_throttled <- throttle(get_status, poll, timeout)
   show_log <- !multiple && show_log && !is.null(get_log)
   t0 <- Sys.time()
@@ -175,17 +174,19 @@ show_new_log <- function(curr, prev, skip) {
 
 
 throttle <- function(call, interval, timeout) {
-  last <- Sys.time() - interval
+  last <- NULL
   time_end <- Sys.time() + timeout
   function(expr) {
-    now <- Sys.time()
-    if (now > time_end) {
-      stop(structure(list(message = "timeout"),
-                     class = c("timeout", "error", "condition")))
-    }
-    wait <- interval - (now - last)
-    if (wait > 0) {
-      Sys.sleep(wait)
+    if (!is.null(last)) { # don't time out or wait on first call
+      now <- Sys.time()
+      if (now > time_end && !is.null(last)) {
+        stop(structure(list(message = "timeout"),
+                       class = c("timeout", "error", "condition")))
+      }
+      wait <- interval - (now - last)
+      if (wait > 0) {
+        Sys.sleep(wait)
+      }
     }
     last <<- Sys.time()
     call()

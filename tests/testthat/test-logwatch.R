@@ -238,7 +238,7 @@ test_that("allow waiting on multiple tasks at once", {
     rep(list(list()), 5))
 
   mockery::expect_called(mock_progress_done, 1)
-    expect_equal(
+  expect_equal(
     mockery::mock_args(mock_progress_done),
     list(list()))
 })

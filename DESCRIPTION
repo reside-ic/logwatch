@@ -1,6 +1,6 @@
 Package: logwatch
 Title: Watch Logs Run
-Version: 0.1.0
+Version: 0.1.1
 Authors@R: c(person("Rich", "FitzJohn", role = c("aut", "cre"),
                     email = "rich.fitzjohn@gmail.com"),
              person("Imperial College of Science, Technology and Medicine",
@@ -9,7 +9,7 @@ Description: Watch a log, streaming progress to the console.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.2.3
+RoxygenNote: 7.3.1
 URL: https://github.com/reside-ic/logwatch
 BugReports: https://github.com/reside-ic/logwatch/issues
 Imports:

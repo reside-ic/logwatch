@@ -197,3 +197,48 @@ test_that("allow totally quiet version", {
   mockery::expect_called(mock_progress_update, 0)
   mockery::expect_called(mock_progress_done, 0)
 })
+
+
+test_that("allow waiting on multiple tasks at once", {
+  mock_progress_bar <- mockery::mock()
+  mock_progress_update <- mockery::mock()
+  mock_progress_done <- mockery::mock()
+  mockery::stub(logwatch, "cli::cli_progress_bar", mock_progress_bar)
+  mockery::stub(logwatch, "cli::cli_progress_update", mock_progress_update)
+  mockery::stub(logwatch, "cli::cli_progress_done", mock_progress_done)
+  get_status <- mockery::mock(
+    c("waiting", "waiting"),
+    c("waiting", "waiting"),
+    c("running", "waiting"),
+    c("running", "running"),
+    c("success", "running"),
+    c("success", "success"))
+
+  res <- evaluate_promise(
+    logwatch("job", get_status, NULL, show_spinner = TRUE, poll = 0,
+             multiple = TRUE))
+
+  expect_equal(res$result$status, c("success", "success"))
+  expect_equal(res$messages, character())
+  expect_equal(res$output, "")
+
+  mockery::expect_called(mock_progress_bar, 1)
+  args <- mockery::mock_args(mock_progress_bar)[[1]]
+  expect_length(args, 2)
+  expect_equal(
+    args$format,
+    "{cli::pb_spin} Waiting for {what} ({summary}) [{cli::pb_elapsed}]")
+  expect_equal(
+    args$format_done,
+    "{.alert-success Waited {cli::pb_elapsed} for {what}}")
+
+  mockery::expect_called(mock_progress_update, 5)
+  expect_equal(
+    mockery::mock_args(mock_progress_update),
+    rep(list(list()), 5))
+
+  mockery::expect_called(mock_progress_done, 1)
+  expect_equal(
+    mockery::mock_args(mock_progress_done),
+    list(list()))
+})

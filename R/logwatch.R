@@ -16,10 +16,10 @@
 ##'
 ##' @param get_log A callback to read logs of the installation
 ##'   (something like `function() readLines(filename, warn = FALSE)`
-##'   may be sufficient)
+##'   may be sufficient), or `NULL` if log fetching is not possible.
 ##'
 ##' @param show_log Logical, indicating if the installation log should
-##'   be printed
+##'   be printed.
 ##'
 ##' @param show_spinner Logical, indicating if a spinner should be
 ##'   shown while waiting for the task to start, and if `show_log` is
@@ -39,9 +39,11 @@
 ##'   does not cancel the underlying process being watched!  We return
 ##'   `status_timeout` after a timeout (by default "timeout").
 ##'
-##' @param status_waiting The value of a waiting status
+##' @param status_waiting The value of a waiting status (can be a
+##'   vector of possible statuses)
 ##'
-##' @param status_running The value of a running status
+##' @param status_running The value of a running status (can be a
+##'   vector of possible statuses)
 ##'
 ##' @param status_timeout The value to return if we timeout
 ##'
@@ -61,11 +63,12 @@ logwatch <- function(what, get_status, get_log, show_log = TRUE, skip = 0,
                      status_interrupt = "interrupt") {
   ## TODO: we should allow for skipping of some amount of log at first
   get_status_throttled <- throttle(get_status, poll, timeout)
+  show_log <- show_log && !is.null(get_log)
   t0 <- Sys.time()
   logs <- NULL
   tryCatch({
     status <- get_status_throttled()
-    if (status == status_waiting) {
+    if (status %in% status_waiting) {
       if (show_spinner) {
         cli::cli_progress_bar(
           format = paste("{cli::pb_spin} Waiting for {what} to start",
@@ -73,7 +76,7 @@ logwatch <- function(what, get_status, get_log, show_log = TRUE, skip = 0,
           format_done = paste("{.alert-success Waited {cli::pb_elapsed}",
                               "for {what} to start}"))
       }
-      while (status == status_waiting) {
+      while (status %in% status_waiting) {
         if (show_spinner) {
           cli::cli_progress_update()
         }
@@ -86,7 +89,7 @@ logwatch <- function(what, get_status, get_log, show_log = TRUE, skip = 0,
     ## TODO: it would be nice to have a reassuring spinner here, but
     ## there's no "cleanup last print" functionality in cli at the
     ## moment (as we've used in the past) so not doing this yet.
-    if (status == status_running) {
+    if (status %in% status_running) {
       if (!show_log && show_spinner) {
         cli::cli_progress_bar(
           format = paste("{cli::pb_spin} Waiting for {what} to finish",
@@ -94,7 +97,7 @@ logwatch <- function(what, get_status, get_log, show_log = TRUE, skip = 0,
           format_done = paste("{.alert-success Waited {cli::pb_elapsed}",
                               "for {what} to finish}"))
       }
-      while (status == status_running) {
+      while (status %in% status_running) {
         if (show_log) {
           logs <- show_new_log(get_log(), logs, skip)
         } else if (show_spinner) {

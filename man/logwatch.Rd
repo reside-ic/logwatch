@@ -69,11 +69,11 @@ vector of possible statuses)}
 \item{status_interrupt}{The value to return if we are interrupted}
 
 \item{multiple}{Logical, indicating if \code{get_status()} is expected
-to return multiple values.  This changes the progress slightly
-by disabling the logging (even if \code{get_log} is provided and
-\code{show_log = TRUE}, logs are never fetched or shown), and there
-is no longer a distinction between waiting for things to start
-vs complete.  Instead, we print a summary of things in the
+to return multiple values.  This changes the progress printing
+slightly by disabling the logging (even if \code{get_log} is provided
+and \code{show_log = TRUE}, logs are never fetched or shown), and
+there is no longer a distinction between waiting for things to
+start vs complete.  Instead, we print a summary of things in the
 waiting, running and finished states.}
 }
 \value{
